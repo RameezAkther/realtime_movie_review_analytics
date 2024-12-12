@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MovieInsights - Search</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .autocomplete-suggestions {
+            border: 1px solid #ccc;
+            background-color: #fff;
+            max-height: 150px;
+            overflow-y: auto;
+            position: absolute;
+            width: 100%;
+            z-index: 1000;
+        }
+        .suggestion-item {
+            padding: 8px;
+            cursor: pointer;
+        }
+        .suggestion-item:hover {
+            background-color: #f0f0f0;
+        }
+    </style>
+</head>
+<body>
+    {% include 'nav_bar.html' %}
+
+    <div class="container mt-5">
+        <div class="card mx-auto" style="width: 50%;">
+            <div class="card-body">
+                <h3 class="card-title text-center">Enter the Movie Name</h3>
+                <div class="form-group position-relative">
+                    <input type="text" id="movieSearch" class="form-control" placeholder="Enter movie title" onkeyup="debouncedGetSuggestions()">
+                    <div id="suggestions" class="autocomplete-suggestions"></div>
+                </div>
+                <button class="btn btn-primary btn-block" onclick="searchMovie()">Go</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let debounceTimer;
+
+        function debouncedGetSuggestions() {
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(getSuggestions, 300); // Wait 300 ms before calling getSuggestions
+        }
+
+        function getSuggestions() {
+            const query = document.getElementById('movieSearch').value;
+
+            if (query.length > 1) {
+                fetch(`/autocomplete?query=${query}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        const suggestionsBox = document.getElementById('suggestions');
+                        suggestionsBox.innerHTML = '';
+                        data.suggestions.forEach(item => {
+                            const div = document.createElement('div');
+                            div.classList.add('suggestion-item');
+                            div.textContent = item;
+                            div.onclick = () => {
+                                document.getElementById('movieSearch').value = item;
+                                suggestionsBox.innerHTML = '';
+                            };
+                            suggestionsBox.appendChild(div);
+                        });
+                    });
+            } else {
+                document.getElementById('suggestions').innerHTML = '';
+            }
+        }
+
+        function searchMovie() {
+            const movieName = document.getElementById('movieSearch').value;
+            if (movieName) {
+                document.getElementById('suggestions').innerHTML = ''; // Clear suggestions when searching
+                window.location.href = `/movie?title=${encodeURIComponent(movieName)}`;
+            } else {
+                alert("Please enter a movie name.");
+            }
+        }
+    </script>
+
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
